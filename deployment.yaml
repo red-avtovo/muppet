@@ -1,0 +1,73 @@
+apiVersion: v1
+kind: Secret
+metadata:
+  name: muppet-secrets
+type: Opaque
+stringData:
+  TELEGRAM_TOKEN: "YOUR_TELEGRAM_BOT_TOKEN"
+  AUTH_TOKEN: "secret_token_123"
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: muppet-config
+data:
+  AUTHORIZED_CHAT_ID: ""
+  HOST: "0.0.0.0"
+  PORT: "8765"
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: muppet-server
+  labels:
+    app: muppet-server
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: muppet-server
+  template:
+    metadata:
+      labels:
+        app: muppet-server
+    spec:
+      containers:
+      - name: muppet-server
+        image: muppet-server:latest
+        imagePullPolicy: Always
+        ports:
+        - containerPort: 8765
+          name: websocket
+        envFrom:
+        - secretRef:
+            name: muppet-secrets
+        - configMapRef:
+            name: muppet-config
+        resources:
+          limits:
+            cpu: "0.5"
+            memory: "256Mi"
+          requests:
+            cpu: "0.2"
+            memory: "128Mi"
+        livenessProbe:
+          tcpSocket:
+            port: 8765
+          initialDelaySeconds: 10
+          periodSeconds: 30
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: muppet-server
+spec:
+  selector:
+    app: muppet-server
+  ports:
+  - port: 8765
+    targetPort: 8765
+    name: websocket
+  type: ClusterIP
