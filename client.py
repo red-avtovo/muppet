@@ -52,7 +52,8 @@ def start_vlc(video_path, host, port):
         "--rc-host", f"{host}:{port}",
         "--loop",  # Makes the video restart automatically after it ends
         "--no-video-title-show",
-        "--fullscreen",
+        "--fullscreen",  # Run in fullscreen mode
+        "--metadata-network-access",  # Allow VLC to access metadata from the network to get the video duration
     ]
 
     print(f"Starting VLC with video: {video_path}")
@@ -74,25 +75,38 @@ def get_video_duration(host, port):
 
 
 def parse_timecode(timecode):
-    """Convert timecode format (hh:mm:ss, mm:ss, or ss) to seconds."""
+    """Convert timecode format (hh:mm:ss, mm:ss or ss, xx% or -1) to seconds, supporting percentages and -1 for random."""
     # Match hh:mm:ss format
     match = re.match(r'^(\d+):(\d+):(\d+)$', timecode)
     if match:
         hours, minutes, seconds = map(int, match.groups())
-        return hours * 3600 + minutes * 60 + seconds
+        total_seconds = hours * 3600 + minutes * 60 + seconds
+        return total_seconds
 
     # Match mm:ss format
     match = re.match(r'^(\d+):(\d+)$', timecode)
     if match:
         minutes, seconds = map(int, match.groups())
-        return minutes * 60 + seconds
+        total_seconds = minutes * 60 + seconds
+        return total_seconds
 
     # Match ss format
-    if timecode.isdigit():
+    if re.match(r'^\d+$', timecode):
         return int(timecode)
 
-    return None
+    # Match xx% format
+    match = re.match(r'^(\d+)%$', timecode)
+    if match:
+        percentage = int(match.group(1))
+        total_duration = get_video_duration(DEFAULT_VLC_HOST, DEFAULT_VLC_PORT)
+        return int(percentage * 0.01 * total_duration)
 
+    # Match -1 for random
+    if timecode == "-1":
+        total_duration = get_video_duration(DEFAULT_VLC_HOST, DEFAULT_VLC_PORT)
+        return random.randint(0, total_duration)
+
+    return None
 
 async def connect_to_server(client_type, auth_token, server_url):
     try:
@@ -111,7 +125,7 @@ async def connect_to_server(client_type, auth_token, server_url):
 
                     # Process specific commands
                     if message.startswith("/seek ") and client_type == "seeker":
-                        # Extract timecode from message (format: /seek hh:mm:ss or /seek mm:ss or /seek ss)
+                        # Extract timecode from message (format: /seek hh:mm:ss or /seek mm:ss or /seek ss or /seek xx% or /seek -1)
                         timecode = message[6:].strip()
                         seconds = parse_timecode(timecode)
 
@@ -166,7 +180,7 @@ async def main():
     auth_token = args.token
     server_url = args.server
     video_path = args.video
-    
+
     DEFAULT_VLC_HOST = args.vlc_host
     DEFAULT_VLC_PORT = args.vlc_port
 

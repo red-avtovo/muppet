@@ -8,8 +8,11 @@ if [ "$(id -u)" -ne 0 ]; then
     exit 1
 fi
 
-# Restart the service
-systemctl restart muppet-client.service
+# Restart the service. Restart command was not always working.
+# Stop the service to make sure it's not running
+systemctl stop muppet-client.service
+# Start the service
+systemctl start muppet-client.service
 
 echo "Muppet client service restarted."
 echo "Check status with: systemctl status muppet-client.service"
