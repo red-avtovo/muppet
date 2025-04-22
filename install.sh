@@ -15,6 +15,18 @@ if [ -z "$CLIENT_TYPE" ] || { [ "$CLIENT_TYPE" != "seeker" ] && [ "$CLIENT_TYPE"
     exit 1
 fi
 
+RUN_USER=""
+while [ -z "$RUN_USER" ]; do
+    read -p "Enter the user to run the service as (or press Enter for default 'pi'): " RUN_USER
+    RUN_USER=${RUN_USER:-"pi"}
+    # Check if user exists
+    if ! id "$RUN_USER" &> /dev/null; then
+        echo "User $RUN_USER does not exist" >&2
+        RUN_USER=""
+    fi
+done
+
+
 # Check if VLC is installed for seeker clients
 if [ "$CLIENT_TYPE" = "seeker" ]; then
     if ! command -v vlc &> /dev/null; then
@@ -96,7 +108,7 @@ After=network.target
 
 [Service]
 Type=simple
-User=pi
+User=$RUN_USER
 WorkingDirectory=$INSTALL_DIR
 ExecStart=$INSTALL_DIR/venv/bin/python3 $INSTALL_DIR/client.py --type $CLIENT_TYPE
 Restart=always
