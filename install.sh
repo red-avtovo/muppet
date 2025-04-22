@@ -110,6 +110,7 @@ After=network.target
 Type=simple
 User=$RUN_USER
 WorkingDirectory=$INSTALL_DIR
+Environment=DISPLAY=:0
 ExecStart=$INSTALL_DIR/venv/bin/python3 $INSTALL_DIR/client.py --type $CLIENT_TYPE
 Restart=always
 RestartSec=10
