@@ -14,8 +14,12 @@ TELEGRAM_TOKEN = os.environ.get("TELEGRAM_TOKEN", "YOUR_TELEGRAM_BOT_TOKEN")
 
 # Authorized chat ID (messages from other chats will be ignored)
 AUTHORIZED_CHAT_ID_STR = os.environ.get("AUTHORIZED_CHAT_ID", "")
-AUTHORIZED_CHAT_ID = int(
-    AUTHORIZED_CHAT_ID_STR) if AUTHORIZED_CHAT_ID_STR.isdigit() else None
+
+AUTHORIZED_CHAT_ID: Optional[int] = None
+try:
+    AUTHORIZED_CHAT_ID = int(AUTHORIZED_CHAT_ID_STR)
+except ValueError:
+    AUTHORIZED_CHAT_ID = None
 
 # Host and port configuration
 # Default to all interfaces in container
