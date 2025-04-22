@@ -315,9 +315,11 @@ async def main():
 
     # Print configuration information
     print(f"WebSocket server started on ws://{HOST}:{PORT}")
-    print(
-        f"Authorized Chat ID: {AUTHORIZED_CHAT_ID if AUTHORIZED_CHAT_ID else 'No restriction (all chats allowed)'}")
-    print("Use /getchatid command in Telegram to get your chat ID for configuration")
+    if AUTHORIZED_CHAT_ID:
+        print(f"Authorized Chat ID: {AUTHORIZED_CHAT_ID}")
+    else:
+        print("No authorized chat ID set, all chats are allowed")
+        print("Use /getchatid command in Telegram to get your chat ID for configuration")
 
     # Keep the application running
     try:
