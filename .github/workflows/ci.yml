@@ -77,7 +77,7 @@ jobs:
       
       - name: Patch deployment.yaml
         run: |
-          sed -i "s/sha_short/${{ steps.vars.outputs.sha_short }}/" deployment.yaml
+          sed -i "s/sha_short/${{ steps.vars.outputs.sha_short }}/" deploy/deployment.yaml
 
       - name: Apply deployment.yaml to Kubernetes
-        run: kubectl apply -f deployment.yaml
+        run: kubectl apply -f deploy/deployment.yaml
