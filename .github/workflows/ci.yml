@@ -68,7 +68,15 @@ jobs:
       - name: Configure kubeconfig
         run: |
           echo "${{ secrets.KUBE_CONFIG }}" > $HOME/.kube/config
+
+      - name: Set Vars
+        id: vars
+        run: |
+          echo ::set-output name=sha_short::$(git rev-parse --short=7 ${{ github.sha }})
       
+      - name: Patch deployment.yaml
+        run: |
+          sed -i "s/sha_short/${{ steps.vars.outputs.sha_short }}/" deployment.yaml
+
       - name: Apply deployment.yaml to Kubernetes
         run: kubectl apply -f deployment.yaml
-        

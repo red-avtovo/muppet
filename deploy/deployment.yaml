@@ -20,7 +20,7 @@ spec:
     spec:
       containers:
       - name: muppet-server
-        image: muppet-server:latest
+        image: muppet:sha-sha_short
         imagePullPolicy: Always
         ports:
         - containerPort: 8765
