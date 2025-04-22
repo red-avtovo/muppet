@@ -6,6 +6,7 @@ from typing import Dict, List
 import websockets
 from telegram import Update
 from telegram.ext import Application, CommandHandler, ContextTypes
+from aiohttp import web
 
 # Get configuration from environment variables with fallbacks
 AUTH_TOKEN = os.environ.get("AUTH_TOKEN", "secret_token_123")
@@ -258,11 +259,32 @@ async def start_websocket_server():
 
 
 # Global application object for sending notifications
-application = None
+application: Application | None = None
+websocket_server: websockets.ServerProtocol | None = None
+
+
+async def health_check(request):
+    """Health check endpoint"""
+    global websocket_server, application
+    # check if the websocket and application are running
+    if websocket_server and application:
+        return web.Response(text="OK", status=200)
+    else:
+        return web.Response(text="Not OK", status=500)
+
+
+async def start_http_server():
+    app = web.Application()
+    app.router.add_get('/health', health_check)
+    runner = web.AppRunner(app)
+    await runner.setup()
+    site = web.TCPSite(runner, HOST, 8080)  # You can choose a different port if needed
+    await site.start()
+    print(f"HTTP server started on http://{HOST}:8080/health")
 
 
 async def main():
-    global application
+    global application, websocket_server
     # Set up the Telegram bot
     application = Application.builder().token(TELEGRAM_TOKEN).build()
 
@@ -282,6 +304,9 @@ async def main():
 
     # Start WebSocket server
     websocket_server = await start_websocket_server()
+
+    # Start HTTP server for health check
+    await start_http_server()
 
     # Print configuration information
     print(f"WebSocket server started on ws://{HOST}:{PORT}")

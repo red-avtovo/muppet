@@ -38,8 +38,9 @@ spec:
             cpu: "0.2"
             memory: "128Mi"
         livenessProbe:
-          tcpSocket:
-            port: 8765
+          httpGet:
+            path: /health
+            port: 8080
           initialDelaySeconds: 10
           periodSeconds: 30
 ---
