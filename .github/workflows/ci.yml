@@ -38,6 +38,11 @@ jobs:
         uses: docker/metadata-action@9ec57ed1fcdbf14dcef7dfbe97b2010124a938b7
         with:
           images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          tags: |
+            # branch event
+            type=ref,event=branch
+            # minimal (short sha)
+            type=sha
 
       - name: Build and push Docker image
         id: push
@@ -54,4 +59,16 @@ jobs:
           subject-name: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME}}
           subject-digest: ${{ steps.push.outputs.digest }}
           push-to-registry: true
+
+      - name: Set up Kubernetes
+        uses: azure/setup-kubectl@v3
+        with:
+          version: 'latest'
+    
+      - name: Configure kubeconfig
+        run: |
+          echo "${{ secrets.KUBE_CONFIG }}" > $HOME/.kube/config
+      
+      - name: Apply deployment.yaml to Kubernetes
+        run: kubectl apply -f deployment.yaml
         

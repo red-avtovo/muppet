@@ -1,0 +1,19 @@
+apiVersion: v1
+kind: Secret
+metadata:
+  name: muppet-secrets
+  namespace: dev
+type: Opaque
+stringData:
+  TELEGRAM_TOKEN: "YOUR_TELEGRAM_BOT_TOKEN"
+  AUTH_TOKEN: "secret_token_123"
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: muppet-config
+  namespace: dev
+data:
+  AUTHORIZED_CHAT_ID: ""
+  HOST: "0.0.0.0"
+  PORT: "8765"
