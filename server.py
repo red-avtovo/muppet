@@ -298,8 +298,7 @@ async def main():
         "getchatid", lambda u, c: u.message.reply_text(f"Your chat ID: {u.effective_chat.id}")))
 
     # Start the Telegram bot
-    await application.initialize()
-    await application.start()
+    await application.run_polling(allowed_updates=Update.MESSAGE)
     print("Telegram bot started!")
 
     # Start WebSocket server
