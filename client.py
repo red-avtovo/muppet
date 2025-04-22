@@ -10,6 +10,7 @@ import subprocess
 import time
 import random
 
+
 # Try to import configuration from config.py if it exists
 try:
     sys.path.append(os.path.dirname(os.path.abspath(__file__)))
@@ -46,7 +47,7 @@ def start_vlc(video_path, host, port):
     """Start VLC with the specified video and return the process."""
     # Launch VLC with loop mode enabled
     vlc_command = [
-        "cvlc", video_path,
+        "vlc", video_path,
         "--intf", "rc",
         "--rc-host", f"{host}:{port}",
         "--loop"  # Makes the video restart automatically after it ends
@@ -143,6 +144,7 @@ async def connect_to_server(client_type, auth_token, server_url):
 
 
 async def main():
+    global DEFAULT_VLC_HOST, DEFAULT_VLC_PORT
     parser = argparse.ArgumentParser(description='WebSocket Client')
     parser.add_argument('--type', choices=['seeker', 'switcher'], default=DEFAULT_CLIENT_TYPE,
                         help='Client type (seeker or switcher)')
@@ -162,9 +164,7 @@ async def main():
     auth_token = args.token
     server_url = args.server
     video_path = args.video
-
-    # Update global defaults with command line parameters
-    global DEFAULT_VLC_HOST, DEFAULT_VLC_PORT
+    
     DEFAULT_VLC_HOST = args.vlc_host
     DEFAULT_VLC_PORT = args.vlc_port
 
