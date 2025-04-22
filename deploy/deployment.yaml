@@ -56,4 +56,4 @@ spec:
   - port: 8765
     targetPort: 8765
     name: websocket
-  type: NodePort
+  type: ClusterIP

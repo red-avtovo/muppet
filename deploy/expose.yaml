@@ -1,0 +1,23 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: muppet-ingress
+  namespace: dev
+  annotations:
+    external-dns.alpha.kubernetes.io/cloudflare-proxied: "true"
+
+spec:
+  tls:
+    - hosts:
+        - some.example.com
+  rules:
+    - host: some.example.com
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: muppet-server
+                port:
+                  number: 8765

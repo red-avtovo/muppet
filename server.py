@@ -133,6 +133,12 @@ async def handle_connection(websocket: websockets.ServerProtocol):
         client_ip = websocket.remote_address[0] if hasattr(
             websocket, 'remote_address') else 'unknown'
 
+        # Check for X-Forwarded-For header
+        x_forwarded_for = websocket.request_headers.get('X-Forwarded-For')
+        if x_forwarded_for:
+            # Use the first IP in the list, which is the original client IP
+            client_ip = x_forwarded_for.split(',')[0].strip()
+
         # Add client to appropriate list
         clients[client_type].append(websocket)
         client_info[websocket] = {
