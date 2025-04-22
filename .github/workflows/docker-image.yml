@@ -7,7 +7,7 @@ on:
     branches: [ "main" ]
 
 env:
-  DOCKER_IMAGE: j0rsa/remote-dev
+  DOCKER_IMAGE: red-avtovo/muppet
 
 jobs:
 
