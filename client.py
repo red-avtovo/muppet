@@ -50,7 +50,9 @@ def start_vlc(video_path, host, port):
         "vlc", video_path,
         "--intf", "rc",
         "--rc-host", f"{host}:{port}",
-        "--loop"  # Makes the video restart automatically after it ends
+        "--loop",  # Makes the video restart automatically after it ends
+        "--no-video-title-show",
+        "--fullscreen",
     ]
 
     print(f"Starting VLC with video: {video_path}")
