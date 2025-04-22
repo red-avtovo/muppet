@@ -47,7 +47,7 @@ def start_vlc(video_path, host, port):
     """Start VLC with the specified video and return the process."""
     # Launch VLC with loop mode enabled
     vlc_command = [
-        "vlc", video_path,
+        "cvlc", video_path,
         "--intf", "rc",
         "--rc-host", f"{host}:{port}",
         "--loop",  # Makes the video restart automatically after it ends
