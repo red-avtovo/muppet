@@ -1,0 +1,30 @@
+name: Docker Image CI
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+env:
+  DOCKER_IMAGE: j0rsa/remote-dev
+
+jobs:
+
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Set Vars
+      id: vars
+      run: |
+        echo ::set-output name=sha_short::$(git rev-parse --short=6 ${{ github.sha }})
+    
+    - name: Build the Docker image
+      run: |
+        docker build . -t ${DOCKER_IMAGE}:${{ steps.vars.outputs.sha_short }} -t ${DOCKER_IMAGE}:latest
+        docker push --all-tags ${DOCKER_IMAGE}
+        
