@@ -2,7 +2,7 @@
 import asyncio
 import random
 import os
-from typing import Dict, List
+from typing import Dict, List, Optional
 import websockets
 from telegram import Update
 from telegram.ext import Application, CommandHandler, ContextTypes
@@ -259,8 +259,8 @@ async def start_websocket_server():
 
 
 # Global application object for sending notifications
-application: Application | None = None
-websocket_server: websockets.ServerProtocol | None = None
+application: Optional[Application] = None
+websocket_server: Optional[websockets.ServerProtocol] = None
 
 
 async def health_check(request):
