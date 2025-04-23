@@ -1,4 +1,5 @@
 # pylint: disable=missing-docstring
+# flake8: noqa: E501
 import asyncio
 import random
 import os
@@ -11,6 +12,7 @@ from aiohttp import web
 # Get configuration from environment variables with fallbacks
 AUTH_TOKEN = os.environ.get("AUTH_TOKEN", "secret_token_123")
 TELEGRAM_TOKEN = os.environ.get("TELEGRAM_TOKEN", "YOUR_TELEGRAM_BOT_TOKEN")
+CALLBACKS_ENABLED = os.environ.get("CALLBACKS_ENABLED", "false").lower() == "true"
 
 # Authorized chat ID (messages from other chats will be ignored)
 AUTHORIZED_CHAT_ID_STR = os.environ.get("AUTHORIZED_CHAT_ID", "")
@@ -111,6 +113,8 @@ async def send_notification(message):
 
 
 async def handle_connection(websocket: websockets.ServerProtocol):
+    """Handle a new client connection."""
+    global CALLBACKS_ENABLED
     try:
         # Wait for the first message which should be the auth token and client type
         auth_message = await websocket.recv()
@@ -162,10 +166,12 @@ async def handle_connection(websocket: websockets.ServerProtocol):
 
         # Handle incoming messages
         async for message in websocket:
+            if CALLBACKS_ENABLED:
+                await send_notification(f"Message received from {client_type}: {message}")
             print(f"Received message from {client_type}: {message}")
             client_info[websocket]['messages_received'] += 1
             # Echo the message back
-            await websocket.send(f"Server received: {message}")
+            # await websocket.send(f"Server received: {message}")
 
     except websockets.exceptions.ConnectionClosed:
         print("Client disconnected")
@@ -257,6 +263,15 @@ async def status_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
     await update.message.reply_text(status_message)
 
 
+async def callback_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    """Handle the /callback command."""
+    global CALLBACKS_ENABLED
+    if not await check_authorized(update):
+        return
+    CALLBACKS_ENABLED = not CALLBACKS_ENABLED
+    await update.message.reply_text(f"Callbacks are now {'enabled' if CALLBACKS_ENABLED else 'disabled'}")
+
+
 async def start_websocket_server():
     """Start the WebSocket server."""
     server = await websockets.serve(
@@ -302,6 +317,7 @@ async def main():
     application.add_handler(CommandHandler("seek", seek_command))
     application.add_handler(CommandHandler("switch", switch_command))
     application.add_handler(CommandHandler("status", status_command))
+    application.add_handler(CommandHandler("callback", callback_command))
 
     # Add a command to display chat ID (useful for configuration)
     application.add_handler(CommandHandler(

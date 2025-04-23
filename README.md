@@ -128,6 +128,7 @@ The following commands can be sent to your Telegram bot:
 - `/switch` - Sends the switch command to all connected switcher clients
 - `/status` - Shows how many clients of each type are currently connected
 - `/getchatid` - Returns your chat ID (useful for configuring the AUTHORIZED_CHAT_ID)
+- `/callback` - Toggles callbacks from the client to the server to TG chat (default is disabled)
 
 ## Client Behavior
 
@@ -140,7 +141,7 @@ Seeker clients control a VLC media player instance:
 - When a seeker client starts, it launches VLC with a configured video file
 - VLC starts playing the video from a random position
 - When the client receives a `/seek [timecode]` command, it jumps to the specified position in the video
-- Supported timecode formats: hh:mm:ss, mm:ss, or ss (e.g., 01:30:45, 5:20, or 45)
+- Supported timecode formats: hh:mm:ss, mm:ss, or ss (e.g., 01:30:45, 5:20, 45, 55% or -1 to jump to random position)
 
 ### Switcher Clients
 

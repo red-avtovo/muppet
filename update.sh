@@ -8,6 +8,22 @@ if [ "$(id -u)" -ne 0 ]; then
     exit 1
 fi
 
+# if git changes exist, request confirmation
+if [ -n "$(git status --porcelain)" ]; then
+    read -p "Git changes exist. Are you sure you want to continue? (Y/n): " confirm
+    # if y or empty, continue
+    if [ "$confirm" != "n"  ]; then
+        echo "Update aborted."
+        exit 1
+    fi
+
+    # drop git changes
+    git reset --hard
+fi
+
+# pull latest changes
+git pull
+
 INSTALL_DIR="/opt/muppet"
 
 # Check if installation exists
@@ -24,6 +40,7 @@ cp "$(dirname "$0")/client.py" "$INSTALL_DIR/"
 
 # Update dependencies
 "$INSTALL_DIR/venv/bin/pip" install --upgrade websockets
+
 
 # Start the service
 systemctl start muppet-client.service

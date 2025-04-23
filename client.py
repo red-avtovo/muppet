@@ -128,12 +128,14 @@ async def connect_to_server(client_type, auth_token, server_url):
                         # Extract timecode from message (format: /seek hh:mm:ss or /seek mm:ss or /seek ss or /seek xx% or /seek -1)
                         timecode = message[6:].strip()
                         seconds = parse_timecode(timecode)
+                        total_duration = get_video_duration(DEFAULT_VLC_HOST, DEFAULT_VLC_PORT)
 
                         if seconds is not None:
                             print(
                                 f"⚠️ SEEK COMMAND RECEIVED - Seeking to {timecode} ({seconds} seconds)")
                             response = send_command_to_vlc(
                                 f"seek {seconds}", DEFAULT_VLC_HOST, DEFAULT_VLC_PORT)
+                            await websocket.send(f"seeked {seconds} of {total_duration}")
                             print(f"VLC response: {response}")
                         else:
                             print(f"⚠️ Invalid timecode format: {timecode}")
