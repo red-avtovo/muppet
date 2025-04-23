@@ -348,6 +348,7 @@ async def main():
         await asyncio.Future()  # Run forever
     finally:
         # Clean shutdown
+        await send_notification("Server shutting down...")
         await application.stop()
         websocket_server.close()
         await websocket_server.wait_closed()
