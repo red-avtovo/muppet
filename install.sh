@@ -119,6 +119,8 @@ StandardOutput=journal
 StandardError=journal
 Restart=always
 RestartSec=10
+TimeoutStopSec=2  # Reduce the stop timeout to 10 seconds
+KillMode=process   # Ensure only the main process is killed
 
 [Install]
 WantedBy=multi-user.target
