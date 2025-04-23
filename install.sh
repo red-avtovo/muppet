@@ -45,17 +45,18 @@ fi
 
 INSTALL_DIR="/opt/muppet"
 
-# Install dependencies
+echo "Updating package list..."
 apt-get update
+echo "Installing dependencies..."
 apt-get install -y python3 python3-pip python3-venv
 
-# Create install directory
+echo "Creating install directory..."
 mkdir -p "$INSTALL_DIR"
 
-# Create virtual environment
+echo "Creating virtual environment..."
 python3 -m venv "$INSTALL_DIR/venv"
 
-# Copy necessary files
+echo "Copying necessary files..."
 cp "$(dirname "$0")/client.py" "$INSTALL_DIR/"
 
 # Prompt for WebSocket server and authentication token
@@ -65,7 +66,7 @@ SERVER_URL=${SERVER_URL:-"ws://localhost:8765"}
 read -p "Enter authentication token (or press Enter for default 'secret_token_123'): " AUTH_TOKEN
 AUTH_TOKEN=${AUTH_TOKEN:-"secret_token_123"}
 
-# Create a client-specific config file
+echo "Creating a client-specific config file..."
 if [ "$CLIENT_TYPE" = "seeker" ]; then
     # Prompt for video path for seeker clients
     read -p "Enter path to video file for VLC (or press Enter for default): " VIDEO_PATH
@@ -96,10 +97,10 @@ SERVER_URL = "$SERVER_URL"
 EOF
 fi
 
-# Install required packages
+echo "Installing required packages..."
 "$INSTALL_DIR/venv/bin/pip" install websockets
 
-# Create systemd service
+echo "Creating systemd service..."
 # Service configuration is the same for both client types since all parameters are in config.py
 cat > "/etc/systemd/system/muppet-client.service" <<EOF
 [Unit]
@@ -122,9 +123,11 @@ RestartSec=10
 WantedBy=multi-user.target
 EOF
 
-# Enable and start the service
+echo "Reloading systemd daemon..."
 systemctl daemon-reload
+echo "Enabling muppet-client.service..."
 systemctl enable muppet-client.service
+echo "Starting muppet-client.service..."
 systemctl start muppet-client.service
 
 echo "Muppet $CLIENT_TYPE client has been installed and started."

@@ -10,7 +10,7 @@ import telnetlib
 import subprocess
 import time
 import random
-
+import signal
 
 # Try to import configuration from config.py if it exists
 try:
@@ -30,6 +30,8 @@ except ImportError:
     DEFAULT_VLC_HOST = "localhost"
     DEFAULT_VLC_PORT = 4212
     DEFAULT_VIDEO_PATH = "/path/to/video.mp4"
+
+VLC_PROCESS = None
 
 
 def send_command_to_vlc(command, host, port):
@@ -161,9 +163,27 @@ async def connect_to_server(client_type, auth_token, server_url):
 
     return True
 
+def signal_handler(sig, frame):
+    global VLC_PROCESS
+    print("Signal received, shutting down...")
+    if VLC_PROCESS:
+        try:
+            send_command_to_vlc("quit", DEFAULT_VLC_HOST, DEFAULT_VLC_PORT)
+            VLC_PROCESS.terminate()
+            print("VLC process terminated.")
+        except Exception as e:
+            print(f"Error stopping VLC: {e}")
+    sys.exit(0)
+
 
 async def main():
-    global DEFAULT_VLC_HOST, DEFAULT_VLC_PORT
+    global DEFAULT_VLC_HOST, DEFAULT_VLC_PORT, VLC_PROCESS
+
+    # Register the signal handler
+    signal.signal(signal.SIGINT, signal_handler)
+    signal.signal(signal.SIGTERM, signal_handler)
+
+
     parser = argparse.ArgumentParser(description='WebSocket Client')
     parser.add_argument('--type', choices=['seeker', 'switcher'], default=DEFAULT_CLIENT_TYPE,
                         help='Client type (seeker or switcher)')
@@ -191,13 +211,12 @@ async def main():
     print(f"Connecting to server at {server_url}")
 
     # Start VLC if this is a seeker client
-    vlc_process = None
     if client_type == "seeker":
         print(f"VLC connection: {DEFAULT_VLC_HOST}:{DEFAULT_VLC_PORT}")
         print(f"Video path: {video_path}")
 
         # Start VLC process
-        vlc_process = start_vlc(video_path, DEFAULT_VLC_HOST, DEFAULT_VLC_PORT)
+        VLC_PROCESS = start_vlc(video_path, DEFAULT_VLC_HOST, DEFAULT_VLC_PORT)
 
         # Wait for VLC to load video
         time.sleep(2)
@@ -220,10 +239,10 @@ async def main():
                 await asyncio.sleep(10)
     finally:
         # Clean up VLC process when the client exits
-        if vlc_process:
+        if VLC_PROCESS:
             try:
                 send_command_to_vlc("quit", DEFAULT_VLC_HOST, DEFAULT_VLC_PORT)
-                vlc_process.terminate()
+                VLC_PROCESS.terminate()
                 print("VLC process terminated.")
             except Exception as e:
                 print(f"Error stopping VLC: {e}")
