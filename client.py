@@ -42,6 +42,7 @@ def send_command_to_vlc(command, host, port):
         with telnetlib.Telnet(host, port) as tn:
             tn.write(command.encode("utf-8") + b"\n")
             response = tn.read_until(b"\n", timeout=1).decode("utf-8").strip()
+            print(f"VLC command {command} response: {response}")
             return response
     except Exception as e:
         print(f"Error sending command to VLC: {e}")
