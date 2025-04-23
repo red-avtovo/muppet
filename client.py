@@ -15,11 +15,12 @@ import signal
 # Try to import configuration from config.py if it exists
 try:
     sys.path.append(os.path.dirname(os.path.abspath(__file__)))
-    from config import CLIENT_TYPE, AUTH_TOKEN, SERVER_URL, VLC_HOST, VLC_PORT, VIDEO_PATH
+    from config import CLIENT_TYPE, AUTH_TOKEN, SERVER_URL, VLC_PORT, VIDEO_PATH, VLC_ADVERTISE_HOST, VLC_CONNECT_HOST
     DEFAULT_CLIENT_TYPE = CLIENT_TYPE
     DEFAULT_AUTH_TOKEN = AUTH_TOKEN
     DEFAULT_SERVER_URL = SERVER_URL
-    DEFAULT_VLC_HOST = VLC_HOST
+    DEFAULT_VLC_ADVERTISE_HOST = VLC_ADVERTISE_HOST
+    DEFAULT_VLC_CONNECT_HOST = VLC_CONNECT_HOST
     DEFAULT_VLC_PORT = VLC_PORT
     DEFAULT_VIDEO_PATH = VIDEO_PATH
 except ImportError:
@@ -27,7 +28,8 @@ except ImportError:
     DEFAULT_CLIENT_TYPE = "seeker"
     DEFAULT_AUTH_TOKEN = "secret_token_123"
     DEFAULT_SERVER_URL = "ws://localhost:8765"
-    DEFAULT_VLC_HOST = "localhost"
+    DEFAULT_VLC_ADVERTISE_HOST = "localhost"
+    DEFAULT_VLC_CONNECT_HOST = "localhost"
     DEFAULT_VLC_PORT = 4212
     DEFAULT_VIDEO_PATH = "/path/to/video.mp4"
 
@@ -101,12 +103,12 @@ def parse_timecode(timecode):
     match = re.match(r'^(\d+)%$', timecode)
     if match:
         percentage = int(match.group(1))
-        total_duration = get_video_duration(DEFAULT_VLC_HOST, DEFAULT_VLC_PORT)
+        total_duration = get_video_duration(DEFAULT_VLC_CONNECT_HOST, DEFAULT_VLC_PORT)
         return int(percentage * 0.01 * total_duration)
 
     # Match -1 for random
     if timecode == "-1":
-        total_duration = get_video_duration(DEFAULT_VLC_HOST, DEFAULT_VLC_PORT)
+        total_duration = get_video_duration(DEFAULT_VLC_CONNECT_HOST, DEFAULT_VLC_PORT)
         return random.randint(0, total_duration)
 
     return None
@@ -131,13 +133,13 @@ async def connect_to_server(client_type, auth_token, server_url):
                         # Extract timecode from message (format: /seek hh:mm:ss or /seek mm:ss or /seek ss or /seek xx% or /seek -1)
                         timecode = message[6:].strip()
                         seconds = parse_timecode(timecode)
-                        total_duration = get_video_duration(DEFAULT_VLC_HOST, DEFAULT_VLC_PORT)
+                        total_duration = get_video_duration(DEFAULT_VLC_CONNECT_HOST, DEFAULT_VLC_PORT)
 
                         if seconds is not None:
                             print(
                                 f"⚠️ SEEK COMMAND RECEIVED - Seeking to {timecode} ({seconds} seconds)")
                             response = send_command_to_vlc(
-                                f"seek {seconds}", DEFAULT_VLC_HOST, DEFAULT_VLC_PORT)
+                                f"seek {seconds}", DEFAULT_VLC_CONNECT_HOST, DEFAULT_VLC_PORT)
                             await websocket.send(f"seeked {seconds} of {total_duration}")
                             print(f"VLC response: {response}")
                         else:
@@ -164,11 +166,11 @@ async def connect_to_server(client_type, auth_token, server_url):
     return True
 
 def signal_handler(sig, frame):
-    global VLC_PROCESS
+    global VLC_PROCESS, DEFAULT_VLC_CONNECT_HOST, DEFAULT_VLC_PORT
     print("Signal received, shutting down...")
     if VLC_PROCESS:
         try:
-            send_command_to_vlc("quit", DEFAULT_VLC_HOST, DEFAULT_VLC_PORT)
+            send_command_to_vlc("quit", DEFAULT_VLC_CONNECT_HOST, DEFAULT_VLC_PORT)
             VLC_PROCESS.terminate()
             print("VLC process terminated.")
         except Exception as e:
@@ -177,7 +179,7 @@ def signal_handler(sig, frame):
 
 
 async def main():
-    global DEFAULT_VLC_HOST, DEFAULT_VLC_PORT, VLC_PROCESS
+    global DEFAULT_VLC_ADVERTISE_HOST, DEFAULT_VLC_CONNECT_HOST, DEFAULT_VLC_PORT, VLC_PROCESS
 
     # Register the signal handler
     signal.signal(signal.SIGINT, signal_handler)
@@ -191,7 +193,7 @@ async def main():
                         help='Authentication token')
     parser.add_argument('--server', default=DEFAULT_SERVER_URL,
                         help='WebSocket server URL')
-    parser.add_argument('--vlc-host', default=DEFAULT_VLC_HOST,
+    parser.add_argument('--vlc-host', default=DEFAULT_VLC_ADVERTISE_HOST,
                         help='VLC host address (for seeker client)')
     parser.add_argument('--vlc-port', type=int, default=DEFAULT_VLC_PORT,
                         help='VLC port number (for seeker client)')
@@ -204,7 +206,7 @@ async def main():
     server_url = args.server
     video_path = args.video
 
-    DEFAULT_VLC_HOST = args.vlc_host
+    DEFAULT_VLC_ADVERTISE_HOST = args.vlc_host
     DEFAULT_VLC_PORT = args.vlc_port
 
     print(f"Starting client as {client_type}")
@@ -212,23 +214,23 @@ async def main():
 
     # Start VLC if this is a seeker client
     if client_type == "seeker":
-        print(f"VLC connection: {DEFAULT_VLC_HOST}:{DEFAULT_VLC_PORT}")
+        print(f"VLC connection: {DEFAULT_VLC_ADVERTISE_HOST}:{DEFAULT_VLC_PORT}")
         print(f"Video path: {video_path}")
 
         # Start VLC process
-        VLC_PROCESS = start_vlc(video_path, DEFAULT_VLC_HOST, DEFAULT_VLC_PORT)
+        VLC_PROCESS = start_vlc(video_path, DEFAULT_VLC_ADVERTISE_HOST, DEFAULT_VLC_PORT)
 
         # Wait for VLC to load video
         time.sleep(2)
 
         # Get video duration
-        duration = get_video_duration(DEFAULT_VLC_HOST, DEFAULT_VLC_PORT)
+        duration = get_video_duration(DEFAULT_VLC_CONNECT_HOST, DEFAULT_VLC_PORT)
         if duration > 0:
             # Seek to a random position between 0 and 80% of the video
             random_position = random.randint(0, int(duration * 0.8))
             print(f"Seeking to random position: {random_position} seconds")
             send_command_to_vlc(
-                f"seek {random_position}", DEFAULT_VLC_HOST, DEFAULT_VLC_PORT)
+                f"seek {random_position}", DEFAULT_VLC_ADVERTISE_HOST, DEFAULT_VLC_PORT)
 
     try:
         # Reconnection loop
@@ -241,7 +243,7 @@ async def main():
         # Clean up VLC process when the client exits
         if VLC_PROCESS:
             try:
-                send_command_to_vlc("quit", DEFAULT_VLC_HOST, DEFAULT_VLC_PORT)
+                send_command_to_vlc("quit", DEFAULT_VLC_ADVERTISE_HOST, DEFAULT_VLC_PORT)
                 VLC_PROCESS.terminate()
                 print("VLC process terminated.")
             except Exception as e:

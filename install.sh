@@ -80,7 +80,8 @@ AUTH_TOKEN = "$AUTH_TOKEN"
 # WebSocket server URL
 SERVER_URL = "$SERVER_URL"
 # VLC connection settings
-VLC_HOST = "localhost"
+VLC_ADVERTISE_HOST = "0.0.0.0"
+VLC_CONNECT_HOST = "localhost"
 VLC_PORT = 4212
 # Path to video file for VLC
 VIDEO_PATH = "$VIDEO_PATH"
