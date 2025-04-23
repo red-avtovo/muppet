@@ -111,6 +111,7 @@ Type=simple
 User=$RUN_USER
 WorkingDirectory=$INSTALL_DIR
 Environment=DISPLAY=:0
+Environment=PYTHONUNBUFFERED=1
 ExecStart=$INSTALL_DIR/venv/bin/python3 $INSTALL_DIR/client.py --type $CLIENT_TYPE
 StandardOutput=journal
 StandardError=journal
