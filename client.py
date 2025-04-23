@@ -1,4 +1,5 @@
 # pylint: disable=missing-docstring
+# flake8: noqa: E501
 import asyncio
 import argparse
 import websockets
