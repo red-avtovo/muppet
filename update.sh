@@ -17,11 +17,11 @@ if [ -n "$(git status --porcelain)" ]; then
         exit 1
     fi
 
-    # drop git changes
+    echo "Resetting git changes..."
     git reset --hard
 fi
 
-# pull latest changes
+echo "Pulling latest changes..."
 git pull
 
 INSTALL_DIR="/opt/muppet"
@@ -32,17 +32,16 @@ if [ ! -d "$INSTALL_DIR" ]; then
     exit 1
 fi
 
-# Stop the service
+echo "Stopping muppet-client.service..."
 systemctl stop muppet-client.service
 
-# Update client script
+echo "Updating client script..."
 cp "$(dirname "$0")/client.py" "$INSTALL_DIR/"
 
-# Update dependencies
+echo "Updating dependencies..."
 "$INSTALL_DIR/venv/bin/pip" install --upgrade websockets
 
-
-# Start the service
+echo "Starting muppet-client.service..."
 systemctl start muppet-client.service
 
 echo "Muppet client has been updated and restarted."
