@@ -40,6 +40,7 @@ def send_command_to_vlc(command, host, port):
     """Sends a command to VLC and returns the response."""
     try:
         with telnetlib.Telnet(host, port) as tn:
+            tn.read_until(b">", timeout=1)
             tn.write(command.encode("utf-8") + b"\n")
             response = tn.read_until(b"\n", timeout=1).decode("utf-8").strip()
             print(f"VLC command {command} response: {response}")
@@ -171,7 +172,6 @@ def signal_handler(sig, frame):
     print("Signal received, shutting down...")
     if VLC_PROCESS:
         try:
-            send_command_to_vlc("quit", DEFAULT_VLC_CONNECT_HOST, DEFAULT_VLC_PORT)
             VLC_PROCESS.terminate()
             print("VLC process terminated.")
         except Exception as e:
@@ -244,7 +244,6 @@ async def main():
         # Clean up VLC process when the client exits
         if VLC_PROCESS:
             try:
-                send_command_to_vlc("quit", DEFAULT_VLC_ADVERTISE_HOST, DEFAULT_VLC_PORT)
                 VLC_PROCESS.terminate()
                 print("VLC process terminated.")
             except Exception as e:
