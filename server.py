@@ -248,9 +248,9 @@ async def status_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
     status_message = (
         f"Connected clients:\n"
         f"- Seekers: {seeker_count}\n"
-        f"  {', '.join(seeker_hosts)}\n"
+        f"  {', '.join(sorted(seeker_hosts))}\n"
         f"- Switchers: {switcher_count}\n"
-        f"  {', '.join(switcher_hosts)}\n"
+        f"  {', '.join(sorted(switcher_hosts))}\n"
         f"- Total: {seeker_count + switcher_count}"
     )
 
