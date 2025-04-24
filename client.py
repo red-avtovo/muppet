@@ -33,7 +33,7 @@ except ImportError:
     DEFAULT_VLC_PORT = 4212
     DEFAULT_VIDEO_PATH = "/path/to/video.mp4"
 
-VLC_PROCESS = None
+VLC_PROCESS: subprocess.Popen | None = None
 
 
 def send_command_to_vlc(command, host, port):
