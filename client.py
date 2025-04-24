@@ -10,6 +10,7 @@ import telnetlib
 import subprocess
 import time
 import random
+import socket
 
 # Try to import configuration from config.py if it exists
 try:
@@ -118,9 +119,9 @@ async def connect_to_server(client_type, auth_token, server_url):
     try:
         async with websockets.connect(server_url) as websocket:
             print(f"Connected to WebSocket server as {client_type}")
-
+            host = socket.gethostname()
             # Send auth token and client type as first message
-            await websocket.send(f"{auth_token}:{client_type}")
+            await websocket.send(f"{auth_token}:{client_type}:{host}")
             print("Sent authentication token and client type")
 
             # Receive and print messages from the server

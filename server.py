@@ -119,9 +119,9 @@ async def handle_connection(websocket: websockets.ServerProtocol):
         # Wait for the first message which should be the auth token and client type
         auth_message = await websocket.recv()
 
-        # Parse auth message (format: "AUTH_TOKEN:CLIENT_TYPE")
-        parts = auth_message.split(":", 1)
-        if len(parts) != 2 or parts[0] != AUTH_TOKEN:
+        # Parse auth message (format: "AUTH_TOKEN:CLIENT_TYPE:HOST")
+        parts = auth_message.split(":", 2)
+        if len(parts) != 3 or parts[0] != AUTH_TOKEN:
             # Send error message and close the connection
             await websocket.send("Authentication failed: Invalid token or format")
             await websocket.close(1008, "Unauthorized")
@@ -133,26 +133,17 @@ async def handle_connection(websocket: websockets.ServerProtocol):
             await websocket.close(1008, "Invalid client type")
             return
 
-        # Get client information from WebSocket
-        client_ip = websocket.remote_address[0] if hasattr(
-            websocket, 'remote_address') else 'unknown'
-
-        # Check for X-Forwarded-For header
-        x_forwarded_for = websocket.request.headers['X-Forwarded-For']
-        if x_forwarded_for:
-            # Use the first IP in the list, which is the original client IP
-            client_ip = x_forwarded_for.split(',')[0].strip()
-
+        host = parts[2]
         # Add client to appropriate list
         clients[client_type].append(websocket)
         client_info[websocket] = {
             'type': client_type,
-            'ip': client_ip,
+            'host': host,
             'connected_at': asyncio.get_event_loop().time(),
             'messages_received': 0
         }
 
-        connection_msg = f"{client_type.capitalize()} client connected from {client_ip}. " \
+        connection_msg = f"{client_type.capitalize()} client connected from {host}. " \
             f"Total {client_type} clients: {len(clients[client_type])}"
         print(connection_msg)
 
@@ -167,8 +158,8 @@ async def handle_connection(websocket: websockets.ServerProtocol):
         # Handle incoming messages
         async for message in websocket:
             if CALLBACKS_ENABLED:
-                await send_notification(f"Message received from {client_type}: {message}")
-            print(f"Received message from {client_type}: {message}")
+                await send_notification(f"Message received from {client_type} ({host}): {message}")
+            print(f"Received message from {client_type} ({host}): {message}")
             client_info[websocket]['messages_received'] += 1
             # Echo the message back
             # await websocket.send(f"Server received: {message}")
@@ -180,11 +171,10 @@ async def handle_connection(websocket: websockets.ServerProtocol):
     finally:
         # Clean up when client disconnects
         client_type = client_info.get(websocket, {}).get('type')
-        client_ip = client_info.get(websocket, {}).get('ip', 'unknown')
 
         if client_type and websocket in clients[client_type]:
             clients[client_type].remove(websocket)
-            disconnect_msg = f"{client_type.capitalize()} client from {client_ip} disconnected. " \
+            disconnect_msg = f"{client_type.capitalize()} client from {host} disconnected. " \
                 f"Total {client_type} clients: {len(clients[client_type])}"
             print(disconnect_msg)
 
@@ -251,12 +241,16 @@ async def status_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
         return
 
     seeker_count = len(clients[CLIENT_TYPE_SEEKER])
+    seeker_hosts = [client_info[client]['host'] for client in clients[CLIENT_TYPE_SEEKER]]
     switcher_count = len(clients[CLIENT_TYPE_SWITCHER])
+    switcher_hosts = [client_info[client]['host'] for client in clients[CLIENT_TYPE_SWITCHER]]
 
     status_message = (
         f"Connected clients:\n"
         f"- Seekers: {seeker_count}\n"
+        f"  {', '.join(seeker_hosts)}\n"
         f"- Switchers: {switcher_count}\n"
+        f"  {', '.join(switcher_hosts)}\n"
         f"- Total: {seeker_count + switcher_count}"
     )
 
